@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 import { Document, Types } from 'mongoose';
 
 export enum RolesEnum{
@@ -31,7 +31,8 @@ export class User {
 
   @Prop({ required: true })
   country: string;
-  @Prop({ required: true })
+  
+  @IsOptional()
   currency: string;
 
 @Prop({require :true})
@@ -45,6 +46,27 @@ export class User {
 
   @Prop({ type: Types.ObjectId, ref: 'Wallet' })
   walletId: Types.ObjectId;
+}
+
+export class CreateAdminDTO{
+  @Prop({ required: true, unique: true })
+  email: string;
+
+  @Prop({ required: true })
+  password: string;
+
+  @Prop({ required: true })
+  firstName: string;
+
+  @Prop({ required: true })
+  lastName: string;
+
+  @Prop({ required: true })
+  phoneNumber: string;
+
+  @Prop({require :true})
+  roles: RolesEnum[];
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -2,7 +2,7 @@ import { WalletsService } from '../wallets/wallet.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { RolesEnum, User, UserDocument } from './user.dtos';
+import { CreateAdminDTO, RolesEnum, User, UserDocument } from './user.dtos';
 import * as bcrypt from 'bcrypt';
 
 
@@ -13,7 +13,7 @@ export class UsersService {
     private readonly walletsService: WalletsService, // inject  wallets service
   ) {}
 
-  async create(user: Partial<User>): Promise<User> {
+  async createUser(user: Partial<User>): Promise<User> {
     const session = await this.userModel.db.startSession();
     session.startTransaction();
     try {
@@ -53,4 +53,26 @@ export class UsersService {
   async findByEmail(userEmail: string): Promise<User | undefined> {
     return this.userModel.findOne({ email: userEmail }).exec();
   }
+
+  async findById(userId: Types.ObjectId): Promise<User | undefined> {
+    return this.userModel.findOne({ _id:userId}).exec();
+  }
+  async createAdminUser(payload:CreateAdminDTO){
+    const hashedPassword = await bcrypt.hash(payload.password, 10);
+    const  role = payload.roles
+    const userExist = await this.findByEmail(payload.email);
+    if(userExist){
+     throw new BadRequestException('user already exist');
+    }
+    let createdAdmin = await this.userModel.create({
+      ...payload,
+      password: hashedPassword,
+      roles:[role]
+    });
+    return createdAdmin;
+  }
+  async  findAllUsers() :Promise<UserDocument[]> {
+    return await this.userModel.find().exec();
+  }
+
 }
