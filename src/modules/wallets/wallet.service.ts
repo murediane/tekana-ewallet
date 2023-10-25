@@ -1,9 +1,8 @@
-// // wallet.service.ts
 import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException, UnauthorizedException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model, Types, ClientSession } from 'mongoose';
 
-import { Wallet, WalletDocument } from './wallet.schema';
+import { Wallet, WalletDocument } from './schemas/wallet.schema';
 import { RolesEnum } from '../users/user.dtos';
 import { Transaction,TransactionDocument, TransactionTypeEnum } from './schemas/transactions.schema';
 import { UsersService } from '../users/user.service';

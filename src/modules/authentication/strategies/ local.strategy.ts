@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
 import { UsersService } from '../../users/user.service';
@@ -17,7 +17,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     }
     const isPasswordMatching = await bcrypt.compare(password, user.password);
     if (!isPasswordMatching) {
-      throw new UnauthorizedException();
+      throw new BadRequestException('wrong credentials, please provide correct credentials');
     } 
     return user;
   }

@@ -1,4 +1,3 @@
-// create-wallet.dto.ts
 import { ObjectId } from 'bson';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { SchemaType, Types } from 'mongoose';

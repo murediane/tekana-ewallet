@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsNotEmpty, IsOptional } from 'class-validator';
+import { IsOptional } from 'class-validator';
 import { Document, Types } from 'mongoose';
 
 export enum RolesEnum{
@@ -31,7 +31,7 @@ export class User {
 
   @Prop({ required: true })
   country: string;
-  
+
   @IsOptional()
   currency: string;
 

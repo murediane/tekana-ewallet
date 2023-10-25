@@ -16,7 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    const user = await this.usersService.findByEmail(payload.username); // 'username' should match the field you used when signing the JWT
+    const user = await this.usersService.findByEmail(payload.username); 
     if (!user) {
       throw new UnauthorizedException();
     }

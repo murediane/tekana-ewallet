@@ -1,6 +1,6 @@
 import { Body, Controller, Post, UseGuards ,Get, Param, Req} from '@nestjs/common';
 import { WalletsService } from './wallet.service';
-import { WalletDocument } from './wallet.schema';
+import { WalletDocument } from './schemas/wallet.schema';
 import { Roles } from 'src/shared/decorators/role.decorator';
 import { RolesGuard } from '../authentication/guards/roles.guards';
 import { JWTAuthGuard }  from '../authentication/guards/jwt-auth-guard'
