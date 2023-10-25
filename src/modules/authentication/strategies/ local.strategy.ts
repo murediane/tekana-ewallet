@@ -12,16 +12,13 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
 
   async validate(email: string, password: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
-    console.log(user);
     if (!user) {
       throw new UnauthorizedException();
     }
     const isPasswordMatching = await bcrypt.compare(password, user.password);
-    console.log(isPasswordMatching);
     if (!isPasswordMatching) {
       throw new UnauthorizedException();
-    }
-    console.log(' ghhhhdfdgdgdgdgdgdgdgdgd',user)
+    } 
     return user;
   }
 }
