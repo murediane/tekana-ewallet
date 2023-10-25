@@ -146,7 +146,7 @@
 - Conduct UAT with the business team.
 
 ## 11. Deployment Strategy
-- Plan for continuous integration and deployment in the development environment and plan for staging, the production environment.
+- Plan for continuous integration and deployment in the development environment and plan for  deployment for staging and  the production environment.
 - Use tools like Docker and Kubernetes for deployment and scaling.
 
 ## 12. Monitoring & Maintenance
