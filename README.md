@@ -1,4 +1,7 @@
 # tekana-e-wallet  MVP
+ ## **<span style="color:#56d8e5">Technologies Used</span>**
+ - Nest js
+ - MongoDB
 
  ## **<span style="color:#56d8e5">Project setup</span>**
  -  create .env according to .env.example 
