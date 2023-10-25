@@ -1,47 +1,96 @@
 # tekana-e-wallet  MVP
 
-## Project settup
+ ## **<span style="color:#56d8e5">Project setup</span>**
  -  create .env according to .env.example 
  -  install the project  dependencies by  running in the terminal  :
- ####  npm install
+ ```
+   npm install
+   ```
  -   to start the project :
- #### npm run start:dev
-
-## endpoint implemented in this project 
+ ```
+  npm run start:dev
+```
+## **<span style="color:#56d8e5">Endpoint implemented in this project </span>**
  ### Users
  - client registration : 
- ##### POST :{{baseUrl}}/users
+  **<span style="color:green">POST :{{baseUrl}}/users</span>**
+ ```
+ {
+
+    "username": "carol",
+    "email":"carol@gmail.com",
+    "password":"chan@2222",
+    "firstName":"carol",
+    "lastName":"carol",
+    "phoneNumber":"0783456788",
+    "country":"rwanda",
+    "currency": "RWF"
+    
+}
+ ```
  - login
- ##### POST :{{baseUrl}}/auth/login
+  **<span style="color:green">POST :{{baseUrl}}/auth/login</span>**
+ ```
+ {
+    "email":"kiki@gmail.com",
+    "password":"didi@1234"
+ }
+ ```
 
  - admin registration :
- ##### POST :{{baseUrl}}//users/admin
+  **<span style="color:green">POST :{{baseUrl}}//users/admin</span>**
+ ```
+ {  "username": "kiki",
+    "email":"kiki@gmail.com",
+    "password":"didi@1234",
+    "firstName":"kuki",
+    "lastName":"kiki",
+    "phoneNumber":"0783456789",
+    "country":"Rwanda",
+    "roles": "admin"
+    }
+ ```
 
  -  admin fetch  all users :
- ##### GET  : {{baseUrl}}/users
+  **<span style="color:green">GET  : {{baseUrl}}/users</span>**
 
  -  get user by email :
- ##### GET : {{baseUrl}}/localhost:1000/users/user_email/:email
+  **<span style="color:green">GET : {{baseUrl}}/localhost:1000/users/user_email/:emai</span>**
 
  ### wallets
   - wallet creation is done upon client creation to avoid having a client without a wallet 
   - Admin fetch all wallets : 
-  ##### GET : {{baseUrl}}/wallets
+   **<span style="color:green">GET : {{baseUrl}}/wallets</span>**
 
   - find user wallet by user email :
-  ##### GET : {{baseUrl}}/wallets/user-email/:email
+  **<span style="color:green">GET : {{baseUrl}}/wallets/user-email/:email<?span>**
   - admin topup wallet :
-  ##### POST : {{baseUrl}}/ wallets /admin-topup/:id
+ **<span style="color:green">POST : {{baseUrl}}/ wallets /admin-topup/:id</span>**
+
+  ```
+   Body:  {
+        "amount":2000,
+        "currency":"KES"
+    } 
+   ```
   - money transfer :
-  ##### POST : {{baseUrl}}/wallets/transfer
+   **<span style="color:green">POST : {{baseUrl}}/wallets/transfer</span>**
+ ```
+  Body: {
+    "receiverEmail":"test@gmail.com",
+    "amount":3000,
+    "currency":"KES"
+  }
+  ``` 
 
   ### Transaction
    - Transaction is created when topup or transfer is done
    -  admin get user transaction  : 
-   ##### GET : {{ baseUrl}}/wallets/transaction/user/:userId
+  
+   **<span style="color:green">GET : {{ baseUrl}}/wallets/transaction/user/:userId</span>**
 
 
-#   step by step strategy  for tekana-e- wallet revamp 
+#   **<span style="color:#56d8e5">step by step strategy  for tekana-e- wallet revamp </span>**
 
 ## 1. Discovery & Requirement Gathering
 - The product owner will conduct a series of interviews with the business team and existing users to understand current pain points, needs, and requirements.
@@ -105,15 +154,15 @@
 - Gather feedback post-go-live.
 - Plan for implementation of the fix and new features based on feedback.
 
-## 14. Documentation & Knowledge Transfer
+## 14. Documentation
 - Maintain updated documentation.
-- Ensure knowledge transfer among the team.
+- Ensure all team members are on the same page.
 
 ## 15. Final Review & Go-Live
 - Conduct a final review with stakeholders.
 - Roll out the system fully with a rollback plan in place.
 
 ## 16. Post Go-Live Support
-- Provide support for all issues that are reported  post-go-live.
+- Provide support for all issues that are reported by clients.
 - Plan for regular reviews and updates.
 
