@@ -5,7 +5,6 @@ import { Model, Types } from 'mongoose';
 import { CreateAdminDTO, RolesEnum, User, UserDocument } from './user.dtos';
 import * as bcrypt from 'bcrypt';
 
-
 @Injectable()
 export class UsersService {
   constructor(
@@ -19,7 +18,7 @@ export class UsersService {
     try {
       const hashedPassword = await bcrypt.hash(user.password, 10);
       const userExist = await this.findByEmail(user.email);
-      if(userExist){
+      if (userExist) {
         throw new BadRequestException('user already exist');
       }
 
@@ -34,7 +33,11 @@ export class UsersService {
       createdUser = await createdUser.save({ session });
 
       const currency = user.currency;
-      const createdWallet = await this.walletsService.createWallet(createdUser._id, currency, session);
+      const createdWallet = await this.walletsService.createWallet(
+        createdUser._id,
+        currency,
+        session,
+      );
 
       createdUser.walletId = createdWallet._id;
       await createdUser.save({ session });
@@ -49,30 +52,29 @@ export class UsersService {
       session.endSession();
     }
   }
-  
+
   async findByEmail(userEmail: string): Promise<User | undefined> {
     return this.userModel.findOne({ email: userEmail }).exec();
   }
 
   async findById(userId: Types.ObjectId): Promise<User | undefined> {
-    return this.userModel.findOne({ _id:userId}).exec();
+    return this.userModel.findOne({ _id: userId }).exec();
   }
-  async createAdminUser(payload:CreateAdminDTO){
+  async createAdminUser(payload: CreateAdminDTO) {
     const hashedPassword = await bcrypt.hash(payload.password, 10);
-    const  role = payload.roles
+    const role = payload.roles;
     const userExist = await this.findByEmail(payload.email);
-    if(userExist){
-     throw new BadRequestException('user already exist');
+    if (userExist) {
+      throw new BadRequestException('user already exist');
     }
     let createdAdmin = await this.userModel.create({
       ...payload,
       password: hashedPassword,
-      roles:[role]
+      roles: [role],
     });
     return createdAdmin;
   }
-  async  findAllUsers() :Promise<UserDocument[]> {
+  async findAllUsers(): Promise<UserDocument[]> {
     return await this.userModel.find().exec();
   }
-
 }
