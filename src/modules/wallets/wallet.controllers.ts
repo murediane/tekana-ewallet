@@ -8,12 +8,12 @@ import {
   Req,
 } from '@nestjs/common';
 import { WalletsService } from './wallet.service';
-import { WalletDocument } from './schemas/wallet.schema';
+import { WalletDocument } from './entities/wallet.entity';
 import { Roles } from 'src/shared/decorators/role.decorator';
 import { RolesGuard } from '../authentication/guards/roles.guards';
 import { JWTAuthGuard } from '../authentication/guards/jwt-auth-guard';
-import { RolesEnum } from '../users/user.dtos';
-import { Types } from 'mongoose';
+import { RolesEnum } from '../users/user.entity';
+
 
 @Controller('wallets')
 export class WalletsController {

@@ -7,46 +7,117 @@ import {
   UnauthorizedException,
   forwardRef,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model, Types, ClientSession } from 'mongoose';
 
-import { Wallet, WalletDocument } from './schemas/wallet.schema';
-import { RolesEnum } from '../users/user.dtos';
+import { Wallet } from './entities/wallet.entity';
+import { RolesEnum, User } from '../users/user.entity';
+// import { TransactionData } from './wallet.dto';
 import {
   Transaction,
-  TransactionDocument,
   TransactionTypeEnum,
-} from './schemas/transactions.schema';
+} from './entities/transactions.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { EntityManager, Repository } from 'typeorm';
+import { Transactional } from 'typeorm-transactional-cls-hooked';
 import { UsersService } from '../users/user.service';
 
 @Injectable()
 export class WalletsService {
+  // constructor(
+  //   @InjectModel(Wallet.name) private walletModel: Model<WalletDocument>,
+  //   @InjectModel(Transaction.name)
+  //   private transactionModel: Model<TransactionDocument>,
+  //   @Inject(forwardRef(() => UsersService))
+  //   private readonly userService: UsersService,
+  // ) {}
+
+  // async createWallet(
+  //   userId: Types.ObjectId,
+  //   currency: string,
+  //   session: ClientSession,
+  // ): Promise<WalletDocument> {
+  //   const newWallet = new this.walletModel({
+  //     userId,
+  //     currency,
+  //     balance: 0,
+  //   });
+
+  //   // save the instance, make sure to pass the session
+  //   return await newWallet.save({ session });
+  // }
+
   constructor(
-    @InjectModel(Wallet.name) private walletModel: Model<WalletDocument>,
-    @InjectModel(Transaction.name)
-    private transactionModel: Model<TransactionDocument>,
+    @InjectRepository(Wallet)
+    private readonly walletRepository: Repository<Wallet>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Transaction)
+    private readonly transactionRepository: Repository<Transaction>,
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
   ) {}
 
+  @Transactional()
   async createWallet(
-    userId: Types.ObjectId,
+    userId: any,
     currency: string,
-    session: ClientSession,
-  ): Promise<WalletDocument> {
-    const newWallet = new this.walletModel({
-      userId,
+    manager: EntityManager,
+  ): Promise<Wallet> {
+    // Find the user using the userRepository
+    const user = await this.userRepository.findOne(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const newWallet = this.walletRepository.create({
+      userId, // Provide the user instance
       currency,
       balance: 0,
     });
 
-    // save the instance, make sure to pass the session
-    return await newWallet.save({ session });
+    // Save the wallet instance
+    return await manager.save(Wallet, newWallet);
   }
 
-  async findAllWallets(): Promise<WalletDocument[]> {
-    return await this.walletModel.find().exec();
+  async findAllWallets() {
+    return await this.walletRepository.find();
   }
+
+  // async findWalletByUserEmail(
+  //   email: string,
+  //   currentUser: any,
+  // ): Promise<Wallet> {
+  //   if (
+  //     email !== currentUser.email &&
+  //     ![RolesEnum.Admin, RolesEnum.Agent, RolesEnum.SuperAdmin].some((role) =>
+  //       currentUser.roles.includes(role),
+  //     )
+  //   ) {
+  //     throw new ForbiddenException(
+  //       'You do not have permission to access this wallet.',
+  //     );
+  //   }
+
+  //   const wallets = await this.walletModel.aggregate([
+  //     {
+  //       $lookup: {
+  //         from: 'users',
+  //         localField: 'userId',
+  //         foreignField: '_id',
+  //         as: 'user_info',
+  //       },
+  //     },
+  //     { $unwind: '$user_info' },
+  //     { $match: { 'user_info.email': email } },
+  //   ]);
+
+  //   if (!wallets.length) {
+  //     throw new NotFoundException(
+  //       `Wallet for user with email ${email} not found`,
+  //     );
+  //   }
+
+  //   return wallets[0];
+  // }
 
   async findWalletByUserEmail(
     email: string,
@@ -63,41 +134,76 @@ export class WalletsService {
       );
     }
 
-    const wallets = await this.walletModel.aggregate([
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user_info',
-        },
-      },
-      { $unwind: '$user_info' },
-      { $match: { 'user_info.email': email } },
-    ]);
+    const wallet = await this.walletRepository
+      .createQueryBuilder('wallet')
+      .leftJoinAndSelect('wallet.user', 'user')
+      .where('user.email = :email', { email })
+      .getOne();
 
-    if (!wallets.length) {
+    if (!wallet) {
       throw new NotFoundException(
         `Wallet for user with email ${email} not found`,
       );
     }
 
-    return wallets[0];
+    return wallet;
   }
+  // async adminTopUpWallet(
+  //   userId: string,
+  //   amount: number,
+  //   currency: string,
+  //   currentUser: any,
+  // ): Promise<Wallet> {
+  //   const initiatorId = currentUser.id;
+  //   if (!currentUser.roles.includes('admin')) {
+  //     throw new UnauthorizedException('Only admins can top up a wallet');
+  //   }
+  //   const userObjectId = new mongoose.Types.ObjectId(userId);
+  //   const wallet = await this.walletModel
+  //     .findOne({ userId: userObjectId })
+  //     .exec();
+
+  //   if (!wallet) {
+  //     throw new NotFoundException(
+  //       `Wallet for user with ID ${userId} not found`,
+  //     );
+  //   }
+
+  //   // Update wallet balance
+  //   wallet.balance += amount;
+  //   await wallet.save();
+
+  //   // Create a new transaction
+  //   const transaction = new this.transactionModel({
+  //     amount: amount,
+  //     currency: currency,
+  //     transactionInitiatorId: initiatorId,
+  //     fromWalletId: null, // since it's a top-up, there's no source wallet
+  //     toWalletId: wallet._id,
+  //     transactionType: TransactionTypeEnum.Topup,
+  //     status: 'completed',
+  //     createdAt: new Date(),
+  //     updatedAt: new Date(),
+  //   });
+
+  //   await transaction.save();
+
+  //   return wallet;
+  // }
+
   async adminTopUpWallet(
-    userId: string,
+    userId: any,
     amount: number,
     currency: string,
     currentUser: any,
   ): Promise<Wallet> {
     const initiatorId = currentUser.id;
+
     if (!currentUser.roles.includes('admin')) {
       throw new UnauthorizedException('Only admins can top up a wallet');
     }
-    const userObjectId = new mongoose.Types.ObjectId(userId);
-    const wallet = await this.walletModel
-      .findOne({ userId: userObjectId })
-      .exec();
+
+    const wallet = await this.walletRepository.findOne({ where: { userId } });
 
     if (!wallet) {
       throw new NotFoundException(
@@ -107,35 +213,35 @@ export class WalletsService {
 
     // Update wallet balance
     wallet.balance += amount;
-    await wallet.save();
+    await this.walletRepository.save(wallet);
 
     // Create a new transaction
-    const transaction = new this.transactionModel({
+    const transaction = this.transactionRepository.create({
       amount: amount,
       currency: currency,
       transactionInitiatorId: initiatorId,
       fromWalletId: null, // since it's a top-up, there's no source wallet
-      toWalletId: wallet._id,
+      toWalletId: wallet.id,
       transactionType: TransactionTypeEnum.Topup,
       status: 'completed',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
-    await transaction.save();
+    await this.transactionRepository.save(transaction);
 
     return wallet;
   }
 
   async transferFunds(
-    senderUserId: Types.ObjectId,
+    senderUserId: number,
     receiverUserEmail: string,
     amount: number,
     currency: string,
   ): Promise<Transaction> {
     // Find sender's wallet
-    const senderWallet = await this.walletModel.findOne({
-      userId: senderUserId,
+    const senderWallet = await this.walletRepository.findOne({
+      where: { senderUserId },
     });
 
     if (!senderWallet) {
@@ -151,8 +257,8 @@ export class WalletsService {
     }
     const receiverUser = await this.userService.findByEmail(receiverUserEmail);
     // Find receiver's wallet
-    const receiverWallet = await this.walletModel.findOne({
-      _id: receiverUser.walletId,
+    const receiverWallet = await this.walletRepository.findOne({
+      where: { id: receiverUser.walletId },
     });
 
     if (!receiverWallet) {
@@ -171,7 +277,7 @@ export class WalletsService {
     await receiverWallet.save();
 
     // Record the transaction
-    const transaction = new this.transactionModel({
+    const transaction = await this.transactionRepository.create({
       transactionInitiatorId: senderUserId,
       currency: currency,
       amount: amount,
@@ -187,20 +293,16 @@ export class WalletsService {
 
     return transaction;
   }
-  async findTransactionsByUserId(
-    userId: Types.ObjectId,
-  ): Promise<Transaction[]> {
+  async findTransactionsByUserId(userId: number): Promise<Transaction[]> {
     const walletUser = await this.userService.findById(userId);
     // Look for transactions where the user is the initiator or the transaction affects their wallet
-    const transactions = await this.transactionModel
-      .find({
-        $or: [
-          { transactionInitiatorId: userId },
-          { fromWalletId: walletUser.walletId },
-          { toWalletId: walletUser.walletId },
-        ],
-      })
-      .exec();
+    const transactions = await this.transactionRepository.find({
+      where: [
+        { transactionInitiatorId: userId },
+        { fromWalletId: walletUser.walletId },
+        { toWalletId: walletUser.walletId },
+      ],
+    });
 
     if (!transactions) {
       throw new NotFoundException('No transactions found for this user');
