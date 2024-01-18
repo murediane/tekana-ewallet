@@ -7,21 +7,18 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-export type WalletDocument = Wallet & Document;
-
 @Entity()
 export class Wallet {
   @PrimaryGeneratedColumn()
   id: number;
 
   @OneToOne(() => User, (user) => user.id)
-  @JoinColumn({ name: 'id' })
-  userId: User;
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
   @Column()
   currency: string;
 
   @Column()
   balance: number;
-  static id: Wallet;
 }

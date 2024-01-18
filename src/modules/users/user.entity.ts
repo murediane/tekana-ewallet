@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   JoinColumn,
   OneToOne,
+  CreateDateColumn,
 } from 'typeorm';
 import { Wallet } from '../wallets/entities/wallet.entity';
 
@@ -39,15 +40,17 @@ export class User {
   currency: string;
 
   @Column()
-  roles: RolesEnum[];
+  roles: string;
+
+  @OneToOne(() => Wallet, { eager: true, cascade: true })
+  @JoinColumn({ name: 'walletId' })
+  wallet: Wallet;
 
   @Column()
+  @CreateDateColumn({ default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @Column()
+  @CreateDateColumn({ default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
-
-  @OneToOne(() => Wallet, (wallet) => wallet.id)
-  @JoinColumn({ name: 'id' })
-  walletId: Wallet;
 }

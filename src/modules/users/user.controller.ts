@@ -11,8 +11,8 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  async createUser(@Body() user: Partial<User>, manager) {
-    return this.usersService.createUser(user, manager);
+  async createUser(@Body() user: Partial<User>) {
+    return this.usersService.createUser(user);
   }
 
   @UseGuards(JWTAuthGuard, RolesGuard)

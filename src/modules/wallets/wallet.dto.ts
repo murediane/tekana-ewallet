@@ -1,13 +1,9 @@
-import { ObjectId } from 'bson';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { SchemaType, Types } from 'mongoose';
-
-import { UserSchema } from '../users/user.entity';
 import { TransactionTypeEnum } from './entities/transactions.entity';
 
 export class CreateWalletDto {
   @IsNotEmpty()
-  userId: Types.ObjectId;
+  userId: number;
 
   @IsNumber()
   @IsOptional()

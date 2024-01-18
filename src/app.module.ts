@@ -14,7 +14,7 @@ import { WalletsModule } from './modules/wallets/wallet.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './modules/users/user.entity';
 import { Wallet } from './modules/wallets/entities/wallet.entity';
-import { Transaction } from './modules/wallets/entities/transactions.entity';
+import { WalletTransaction } from './modules/wallets/entities/transactions.entity';
 
 @Module({
   imports: [
@@ -22,13 +22,13 @@ import { Transaction } from './modules/wallets/entities/transactions.entity';
       isGlobal: true,
       load: [configuration],
     }),
-    TypeOrmModule.forFeature([Wallet, Transaction, User]),
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: configuration().database.url,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
+    TypeOrmModule.forFeature([User, Wallet, WalletTransaction]),
     UsersModule,
     WalletsModule,
     PassportModule,

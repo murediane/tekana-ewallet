@@ -1,11 +1,5 @@
 import { User } from 'src/modules/users/user.entity';
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Wallet } from './wallet.entity';
 
 export enum TransactionTypeEnum {
@@ -14,13 +8,12 @@ export enum TransactionTypeEnum {
 }
 
 @Entity()
-export class Transaction {
+export class WalletTransaction {
   @PrimaryGeneratedColumn()
   id: number;
 
   @ManyToOne(() => User, (user) => user.id)
-  @JoinColumn({ name: 'id' })
-  transactionInitiatorId: User;
+  transactionInitiator: User;
 
   @Column()
   currency: string;
@@ -29,15 +22,13 @@ export class Transaction {
   amount: number;
 
   @ManyToOne(() => Wallet, (wallet) => wallet.id)
-  @JoinColumn({ name: 'id' })
-  fromWalletId: Wallet;
+  fromWallet: Wallet;
 
   @ManyToOne(() => Wallet, (wallet) => wallet.id)
-  @JoinColumn({ name: 'id' })
-  toWalletId: Wallet;
+  toWallet: Wallet;
 
   @Column()
-  transactionType: TransactionTypeEnum[];
+  transactionType: TransactionTypeEnum;
 
   @Column()
   status: string;

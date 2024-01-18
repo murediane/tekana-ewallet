@@ -1,5 +1,3 @@
-import { number } from 'yargs';
-
 export enum Environonement {
   Production = 'production',
   Development = 'developement',

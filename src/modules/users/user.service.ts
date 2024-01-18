@@ -4,94 +4,61 @@ import { RolesEnum, User } from './user.entity';
 import { CreateAdminDTO } from './user.dto';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
-import { Transactional } from 'typeorm-transactional-cls-hooked';
-import { Wallet } from '../wallets/entities/wallet.entity';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-  // constructor(
-  //   @InjectRepository(User)
-  //   private readonly userRepository: Repository<User>,
-  //   private readonly walletsService: WalletsService, // inject  wallets service
-  // ) {}
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly walletsService: WalletsService,
+    private dataSource: DataSource,
   ) {}
 
-  // async createUser(user: Partial<User>): Promise<User> {
-  //   const session = await this.userModel.db.startSession();
-  //   session.startTransaction();
-  //   try {
-  //     const hashedPassword = await bcrypt.hash(user.password, 10);
-  //     const userExist = await this.findByEmail(user.email);
-  //     if (userExist) {
-  //       throw new BadRequestException('user already exist');
-  //     }
+  async createUser(user: Partial<User>): Promise<User> {
+    const queryRunner = this.dataSource.createQueryRunner();
 
-  //     // create a new instance of the model
-  //     let createdUser = new this.userModel({
-  //       ...user,
-  //       password: hashedPassword,
-  //       roles: RolesEnum.Client,
-  //     });
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-  //     // save the instance
-  //     createdUser = await createdUser.save({ session });
+    try {
+      const hashedPassword = await bcrypt.hash(user.password, 10);
 
-  //     const currency = user.currency;
-  //     const createdWallet = await this.walletsService.createWallet(
-  //       createdUser._id,
-  //       currency,
-  //       session,
-  //     );
+      const userExist = await this.userRepository.findOne({
+        where: { email: user.email },
+      });
+      if (userExist) {
+        throw new BadRequestException('User already exists');
+      }
 
-  //     createdUser.walletId = createdWallet._id;
-  //     await createdUser.save({ session });
+      const createdUser = this.userRepository.create({
+        ...user,
+        password: hashedPassword,
+        roles: RolesEnum.Client,
+      });
 
-  //     await session.commitTransaction();
+      await queryRunner.manager.save(createdUser);
 
-  //     return createdUser;
-  //   } catch (error) {
-  //     await session.abortTransaction();
-  //     throw error;
-  //   } finally {
-  //     session.endSession();
-  //   }
-  // }
+      const currency = user.currency;
+      const createdWallet = await this.walletsService.createWallet(
+        createdUser,
+        currency,
+        queryRunner,
+      );
 
-  @Transactional()
-  async createUser(user: Partial<User>, manager: EntityManager): Promise<User> {
-    const hashedPassword = await bcrypt.hash(user.password, 10);
+      createdUser.wallet = createdWallet;
+      await queryRunner.manager.save(createdUser);
+      await queryRunner.commitTransaction();
 
-    const userExist = await this.userRepository.findOne({
-      where: { email: user.email },
-    });
-    if (userExist) {
-      throw new BadRequestException('User already exists');
+      return createdUser;
+    } catch (err) {
+      // since we have errors lets rollback the changes we made
+      await queryRunner.rollbackTransaction();
+      return err;
+    } finally {
+      // you need to release a queryRunner which was manually instantiated
+      await queryRunner.release();
     }
-
-    const createdUser = this.userRepository.create({
-      ...user,
-      password: hashedPassword,
-      roles: [RolesEnum.Client],
-    });
-
-    await manager.save(createdUser);
-
-    const currency = user.currency;
-    const createdWallet = await this.walletsService.createWallet(
-      createdUser.id,
-      currency,
-      manager,
-    );
-
-    createdUser.walletId = createdWallet.id as unknown as Wallet;
-    await manager.save(createdUser);
-
-    return createdUser;
   }
 
   async findByEmail(userEmail: string): Promise<User | undefined> {
@@ -113,7 +80,7 @@ export class UsersService {
     const createdAdmin = this.userRepository.create({
       ...payload,
       password: hashedPassword,
-      roles: [role],
+      roles: role,
     });
     return createdAdmin;
   }

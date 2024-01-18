@@ -10,7 +10,7 @@ export class CreateAdminDTO {
 
   phoneNumber: string;
 
-  roles: RolesEnum[];
+  roles: RolesEnum;
 }
 
 export class CreateUserDTO {
