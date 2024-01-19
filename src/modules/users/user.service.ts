@@ -1,6 +1,6 @@
 import { WalletsService } from '../wallets/wallet.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { RolesEnum, User } from './user.entity';
+import { RolesEnum, Users } from './user.entity';
 import { CreateAdminDTO } from './user.dto';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,13 +9,13 @@ import { DataSource, Repository } from 'typeorm';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(Users)
+    private readonly userRepository: Repository<Users>,
     private readonly walletsService: WalletsService,
     private dataSource: DataSource,
   ) {}
 
-  async createUser(user: Partial<User>): Promise<User> {
+  async createUser(user: Partial<Users>): Promise<Users> {
     const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
@@ -61,13 +61,13 @@ export class UsersService {
     }
   }
 
-  async findByEmail(userEmail: string): Promise<User | undefined> {
+  async findByEmail(userEmail: string): Promise<Users | undefined> {
     return await this.userRepository.findOne({
       where: { email: userEmail },
     });
   }
 
-  async findById(id): Promise<User | undefined> {
+  async findById(id): Promise<Users | undefined> {
     return this.userRepository.findOne(id);
   }
   async createAdminUser(payload: CreateAdminDTO) {
@@ -80,8 +80,10 @@ export class UsersService {
     const createdAdmin = this.userRepository.create({
       ...payload,
       password: hashedPassword,
+      currency: 'N/A',
       roles: role,
     });
+    await this.userRepository.save(createdAdmin);
     return createdAdmin;
   }
   async findAllUsers() {

@@ -1,4 +1,4 @@
-import { User } from 'src/modules/users/user.entity';
+import { Users } from 'src/modules/users/user.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Wallet } from './wallet.entity';
 
@@ -12,8 +12,8 @@ export class WalletTransaction {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User, (user) => user.id)
-  transactionInitiator: User;
+  @ManyToOne(() => Users, (user) => user.id)
+  transactionInitiatorId: Users;
 
   @Column()
   currency: string;

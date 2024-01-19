@@ -3,21 +3,19 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
-  Logger,
   NotFoundException,
   UnauthorizedException,
   forwardRef,
 } from '@nestjs/common';
 
 import { Wallet } from './entities/wallet.entity';
-import { RolesEnum, User } from '../users/user.entity';
-// import { TransactionData } from './wallet.dto';
+import { RolesEnum, Users } from '../users/user.entity';
 import {
   WalletTransaction,
   TransactionTypeEnum,
 } from './entities/transactions.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryRunner, Repository } from 'typeorm';
+import { Equal, QueryRunner, Repository } from 'typeorm';
 import { UsersService } from '../users/user.service';
 
 @Injectable()
@@ -27,14 +25,14 @@ export class WalletsService {
     private readonly userService: UsersService,
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(Users)
+    private readonly userRepository: Repository<Users>,
     @InjectRepository(WalletTransaction)
     private readonly waletTransactionRepository: Repository<WalletTransaction>,
   ) {}
 
   async createWallet(
-    user: User,
+    user: Users,
     currency: string,
     queryRunner: QueryRunner,
   ): Promise<Wallet> {
@@ -113,7 +111,7 @@ export class WalletsService {
     const transaction = this.waletTransactionRepository.create({
       amount: amount,
       currency: currency,
-      transactionInitiator: currentUser,
+      transactionInitiatorId: currentUser,
       fromWallet: null, // since it's a top-up, there's no source wallet
       toWallet: wallet,
       transactionType: TransactionTypeEnum.Topup,
@@ -176,7 +174,7 @@ export class WalletsService {
 
     // Record the transaction
     const transaction = await this.waletTransactionRepository.create({
-      transactionInitiator: senderUser,
+      transactionInitiatorId: senderUser,
       currency: currency,
       amount: amount,
       fromWallet: senderWallet,
@@ -187,25 +185,21 @@ export class WalletsService {
       updatedAt: new Date(),
     });
 
-    await this.walletRepository.save(transaction);
+    await this.waletTransactionRepository.save(transaction);
 
     return transaction;
   }
-  async findTransactionsByUserId(userId: number): Promise<WalletTransaction[]> {
-    const walletUser = await this.userService.findById(userId);
-    // Look for transactions where the user is the initiator or the transaction affects their wallet
-    const transactions = await this.waletTransactionRepository.find({
-      where: [
-        { transactionInitiator: walletUser },
-        { fromWallet: walletUser },
-        { toWallet: walletUser },
-      ],
-    });
+  async findTransactionsByWalletId(
+    walletId: number,
+  ): Promise<WalletTransaction[]> {
+    try {
+      const transactions = await this.waletTransactionRepository.find({
+        where: [{ fromWallet: Equal(walletId) }, { toWallet: Equal(walletId) }],
+      });
 
-    if (!transactions) {
-      throw new NotFoundException('No transactions found for this user');
+      return transactions;
+    } catch (error) {
+      throw new BadRequestException(`transaction not found for this user`);
     }
-
-    return transactions;
   }
 }
