@@ -12,7 +12,7 @@ import { JwtStrategy } from './modules/authentication/strategies/jwt.strategy';
 import { AuthController } from './modules/authentication/authentication.controller';
 import { WalletsModule } from './modules/wallets/wallet.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './modules/users/user.entity';
+import { Users } from './modules/users/user.entity';
 import { Wallet } from './modules/wallets/entities/wallet.entity';
 import { WalletTransaction } from './modules/wallets/entities/transactions.entity';
 
@@ -28,7 +28,7 @@ import { WalletTransaction } from './modules/wallets/entities/transactions.entit
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([User, Wallet, WalletTransaction]),
+    TypeOrmModule.forFeature([Users, Wallet, WalletTransaction]),
     UsersModule,
     WalletsModule,
     PassportModule,

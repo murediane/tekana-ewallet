@@ -88,9 +88,9 @@
 
   ### Transaction
    - Transaction is created when topup or transfer is done
-   -  admin get user transaction  : 
+   -  admin get  transaction  : 
   
-   **<span style="color:green">GET : {{ baseUrl}}/wallets/transaction/user/:userId</span>**
+   **<span style="color:green">GET : {{ baseUrl}}/wallets/transaction/wallet/:walletId</span>**
 
 
 #   **<span style="color:#56d8e5">step by step strategy  for tekana-e- wallet revamp </span>**

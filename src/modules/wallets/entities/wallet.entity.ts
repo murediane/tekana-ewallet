@@ -1,4 +1,4 @@
-import { User } from 'src/modules/users/user.entity';
+import { Users } from 'src/modules/users/user.entity';
 import {
   Column,
   Entity,
@@ -12,9 +12,9 @@ export class Wallet {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToOne(() => User, (user) => user.id)
+  @OneToOne(() => Users, (user) => user.id)
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user: Users;
 
   @Column()
   currency: string;

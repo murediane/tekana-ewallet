@@ -16,7 +16,7 @@ export enum RolesEnum {
 }
 
 @Entity()
-export class User {
+export class Users {
   @PrimaryGeneratedColumn()
   id: number;
   @Column()

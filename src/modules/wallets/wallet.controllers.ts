@@ -66,9 +66,9 @@ export class WalletsController {
   }
 
   @UseGuards(JWTAuthGuard, RolesGuard)
-  @Get('transaction/user/:userId')
+  @Get('transaction/wallet/:walletId')
   @Roles(RolesEnum.Admin, RolesEnum.Agent, RolesEnum.SuperAdmin)
-  async findTransactionsByUserId(@Param('userId') userId: number) {
-    return this.walletsService.findTransactionsByUserId(userId);
+  async findTransactionsByUserId(@Param('walletId') walletId: number) {
+    return this.walletsService.findTransactionsByUserId(walletId);
   }
 }
