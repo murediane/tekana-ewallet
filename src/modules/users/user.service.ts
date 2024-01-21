@@ -1,80 +1,92 @@
 import { WalletsService } from '../wallets/wallet.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { CreateAdminDTO, RolesEnum, User, UserDocument } from './user.dtos';
+import { RolesEnum, Users } from './user.entity';
+import { CreateAdminDTO } from './user.dto';
 import * as bcrypt from 'bcrypt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private readonly walletsService: WalletsService, // inject  wallets service
+    @InjectRepository(Users)
+    private readonly userRepository: Repository<Users>,
+    private readonly walletsService: WalletsService,
+    private dataSource: DataSource,
   ) {}
 
-  async createUser(user: Partial<User>): Promise<User> {
-    const session = await this.userModel.db.startSession();
-    session.startTransaction();
+  async createUser(user: Partial<Users>): Promise<Users> {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
       const hashedPassword = await bcrypt.hash(user.password, 10);
-      const userExist = await this.findByEmail(user.email);
+
+      const userExist = await this.userRepository.findOne({
+        where: { email: user.email },
+      });
       if (userExist) {
-        throw new BadRequestException('user already exist');
+        throw new BadRequestException('User already exists');
       }
 
-      // create a new instance of the model
-      let createdUser = new this.userModel({
+      const createdUser = this.userRepository.create({
         ...user,
         password: hashedPassword,
         roles: RolesEnum.Client,
       });
 
-      // save the instance
-      createdUser = await createdUser.save({ session });
+      await queryRunner.manager.save(createdUser);
 
       const currency = user.currency;
       const createdWallet = await this.walletsService.createWallet(
-        createdUser._id,
+        createdUser,
         currency,
-        session,
+        queryRunner,
       );
 
-      createdUser.walletId = createdWallet._id;
-      await createdUser.save({ session });
-
-      await session.commitTransaction();
+      createdUser.wallet = createdWallet;
+      await queryRunner.manager.save(createdUser);
+      await queryRunner.commitTransaction();
 
       return createdUser;
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
+    } catch (err) {
+      // since we have errors lets rollback the changes we made
+      await queryRunner.rollbackTransaction();
+      return err;
     } finally {
-      session.endSession();
+      // you need to release a queryRunner which was manually instantiated
+      await queryRunner.release();
     }
   }
 
-  async findByEmail(userEmail: string): Promise<User | undefined> {
-    return this.userModel.findOne({ email: userEmail }).exec();
+  async findByEmail(userEmail: string): Promise<Users | undefined> {
+    return await this.userRepository.findOne({
+      where: { email: userEmail },
+    });
   }
 
-  async findById(userId: Types.ObjectId): Promise<User | undefined> {
-    return this.userModel.findOne({ _id: userId }).exec();
+  async findById(id): Promise<Users | undefined> {
+    return this.userRepository.findOne(id);
   }
   async createAdminUser(payload: CreateAdminDTO) {
     const hashedPassword = await bcrypt.hash(payload.password, 10);
-    const role = payload.roles;
+    const role = payload.roles as unknown as RolesEnum;
     const userExist = await this.findByEmail(payload.email);
     if (userExist) {
       throw new BadRequestException('user already exist');
     }
-    let createdAdmin = await this.userModel.create({
+    const createdAdmin = this.userRepository.create({
       ...payload,
       password: hashedPassword,
-      roles: [role],
+      currency: 'N/A',
+      roles: role,
     });
+    await this.userRepository.save(createdAdmin);
     return createdAdmin;
   }
-  async findAllUsers(): Promise<UserDocument[]> {
-    return await this.userModel.find().exec();
+  async findAllUsers() {
+    return await this.userRepository.find();
   }
 }

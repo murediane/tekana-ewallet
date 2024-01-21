@@ -8,12 +8,11 @@ import {
   Req,
 } from '@nestjs/common';
 import { WalletsService } from './wallet.service';
-import { WalletDocument } from './schemas/wallet.schema';
+import { Wallet } from './entities/wallet.entity';
 import { Roles } from 'src/shared/decorators/role.decorator';
 import { RolesGuard } from '../authentication/guards/roles.guards';
 import { JWTAuthGuard } from '../authentication/guards/jwt-auth-guard';
-import { RolesEnum } from '../users/user.dtos';
-import { Types } from 'mongoose';
+import { RolesEnum } from '../users/user.entity';
 
 @Controller('wallets')
 export class WalletsController {
@@ -21,7 +20,7 @@ export class WalletsController {
   @UseGuards(JWTAuthGuard, RolesGuard)
   @Get()
   @Roles(RolesEnum.Admin, RolesEnum.Agent)
-  async findAll(): Promise<WalletDocument[]> {
+  async findAll(): Promise<Wallet[]> {
     return this.walletsService.findAllWallets();
   }
 
@@ -35,7 +34,7 @@ export class WalletsController {
   @Post('/admin-topup/:id')
   @Roles(RolesEnum.Admin, RolesEnum.Agent, RolesEnum.SuperAdmin)
   async adminTopUpWallet(
-    @Param('id') userId: string,
+    @Param('id') userId: number,
     @Body('amount') amount: number,
     @Body('currency') currency: string,
     @Req() request,
@@ -67,11 +66,9 @@ export class WalletsController {
   }
 
   @UseGuards(JWTAuthGuard, RolesGuard)
-  @Get('transaction/user/:userId')
+  @Get('transaction/wallet/:walletId')
   @Roles(RolesEnum.Admin, RolesEnum.Agent, RolesEnum.SuperAdmin)
-  async findTransactionsByUserId(@Param('userId') userId: string) {
-    return this.walletsService.findTransactionsByUserId(
-      new Types.ObjectId(userId),
-    );
+  async findTransactionsByUserId(@Param('walletId') walletId: number) {
+    return this.walletsService.findTransactionsByWalletId(walletId);
   }
 }

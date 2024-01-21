@@ -1,17 +1,15 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Wallet } from './entities/wallet.entity';
+import { Users } from '../users/user.entity';
+import { WalletTransaction } from './entities/transactions.entity';
 import { WalletsService } from './wallet.service';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Wallet, WalletSchema } from './schemas/wallet.schema';
 import { WalletsController } from './wallet.controllers';
-import { Transaction, TransactionSchema } from './schemas/transactions.schema';
 import { UsersModule } from '../users/user.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Wallet.name, schema: WalletSchema },
-      { name: Transaction.name, schema: TransactionSchema },
-    ]),
+    TypeOrmModule.forFeature([Users, Wallet, WalletTransaction]),
     forwardRef(() => UsersModule),
   ],
   controllers: [WalletsController],
