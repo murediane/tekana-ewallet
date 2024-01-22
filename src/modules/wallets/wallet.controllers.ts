@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { WalletsService } from './wallet.service';
 import { Wallet } from './entities/wallet.entity';
-import { Roles } from 'src/shared/decorators/role.decorator';
+import { Roles } from '../../shared/decorators/role.decorator';
 import { RolesGuard } from '../authentication/guards/roles.guards';
 import { JWTAuthGuard } from '../authentication/guards/jwt-auth-guard';
 import { RolesEnum } from '../users/user.entity';

@@ -4,7 +4,7 @@ import { RolesEnum, Users } from './user.entity';
 import { CreateAdminDTO } from './user.dto';
 import { JWTAuthGuard } from '../authentication/guards/jwt-auth-guard';
 import { RolesGuard } from '../authentication/guards/roles.guards';
-import { Roles } from 'src/shared/decorators/role.decorator';
+import { Roles } from '../../shared/decorators/role.decorator';
 
 @Controller('users')
 export class UsersController {

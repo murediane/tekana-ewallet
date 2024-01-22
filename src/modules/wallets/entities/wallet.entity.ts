@@ -1,4 +1,4 @@
-import { Users } from 'src/modules/users/user.entity';
+import { Users } from '../../users/user.entity';
 import {
   Column,
   Entity,

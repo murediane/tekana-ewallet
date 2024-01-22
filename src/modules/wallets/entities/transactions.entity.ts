@@ -1,4 +1,4 @@
-import { Users } from 'src/modules/users/user.entity';
+import { Users } from '../../users/user.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Wallet } from './wallet.entity';
 
@@ -21,10 +21,10 @@ export class WalletTransaction {
   @Column()
   amount: number;
 
-  @ManyToOne(() => Wallet, (wallet) => wallet.id)
+  @ManyToOne(() => Wallet, (wallet) => wallet.id, { cascade: true })
   fromWallet: Wallet;
 
-  @ManyToOne(() => Wallet, (wallet) => wallet.id)
+  @ManyToOne(() => Wallet, (wallet) => wallet.id, { cascade: true })
   toWallet: Wallet;
 
   @Column()

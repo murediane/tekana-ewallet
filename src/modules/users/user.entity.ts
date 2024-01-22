@@ -5,6 +5,7 @@ import {
   JoinColumn,
   OneToOne,
   CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Wallet } from '../wallets/entities/wallet.entity';
 
@@ -19,9 +20,11 @@ export enum RolesEnum {
 export class Users {
   @PrimaryGeneratedColumn()
   id: number;
+
   @Column()
   email: string;
-  @Column()
+
+  @Column({ select: false })
   password: string;
 
   @Column()
@@ -42,7 +45,7 @@ export class Users {
   @Column()
   roles: string;
 
-  @OneToOne(() => Wallet, { eager: true, cascade: true })
+  @OneToOne(() => Wallet, { eager: true, cascade: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'walletId' })
   wallet: Wallet;
 
@@ -51,6 +54,6 @@ export class Users {
   createdAt: Date;
 
   @Column()
-  @CreateDateColumn({ default: () => 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({ default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 }

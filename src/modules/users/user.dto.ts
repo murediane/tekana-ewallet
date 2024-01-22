@@ -25,7 +25,7 @@ export class CreateUserDTO {
   country: string;
 
   currency: string;
-  roles: RolesEnum[];
+  roles: string;
 
   walletId: Wallet;
 }
