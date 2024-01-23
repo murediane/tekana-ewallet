@@ -84,7 +84,7 @@ export class WalletsService {
   }
 
   async adminTopUpWallet(
-    userId: number,
+    walletId: number,
     amount: number,
     currency: string,
     currentUser: any,
@@ -94,12 +94,12 @@ export class WalletsService {
     }
 
     const wallet = await this.walletRepository.findOne({
-      where: { id: userId },
+      where: { id: walletId },
     });
 
     if (!wallet) {
       throw new NotFoundException(
-        `Wallet for user with ID ${userId} not found`,
+        `Wallet for user with ID ${walletId} not found`,
       );
     }
 
@@ -133,13 +133,12 @@ export class WalletsService {
   ): Promise<WalletTransaction> {
     // Find sender's wallet
     const senderWallet = await this.walletRepository.findOne({
-      where: { id: senderUserId },
+      where: { user: { id: senderUserId } },
     });
 
     const senderUser = await this.userRepository.findOne({
       where: { id: senderUserId },
     });
-
     if (!senderWallet) {
       throw new NotFoundException(`Sender's wallet not found`);
     }
@@ -189,6 +188,7 @@ export class WalletsService {
 
     return transaction;
   }
+
   async findTransactionsByUserId(
     walletId: number,
   ): Promise<WalletTransaction[]> {

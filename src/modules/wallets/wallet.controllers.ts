@@ -34,13 +34,13 @@ export class WalletsController {
   @Post('/admin-topup/:id')
   @Roles(RolesEnum.Admin, RolesEnum.Agent, RolesEnum.SuperAdmin)
   async adminTopUpWallet(
-    @Param('id') userId: number,
+    @Param('id') walletId: number,
     @Body('amount') amount: number,
     @Body('currency') currency: string,
     @Req() request,
   ) {
     return this.walletsService.adminTopUpWallet(
-      userId,
+      walletId,
       amount,
       currency,
       request.user,
@@ -55,7 +55,7 @@ export class WalletsController {
     @Body('currency') currency: string,
     @Req() req,
   ) {
-    const senderUserId = req.user._id;
+    const senderUserId = req.user.id;
 
     return this.walletsService.transferFunds(
       senderUserId,
