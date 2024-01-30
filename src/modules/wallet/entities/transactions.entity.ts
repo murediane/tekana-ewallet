@@ -1,4 +1,4 @@
-import { Users } from '../../users/user.entity';
+import { User } from '../../user/user.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Wallet } from './wallet.entity';
 
@@ -7,13 +7,13 @@ export enum TransactionTypeEnum {
   transfer = 'transfer',
 }
 
-@Entity()
+@Entity({ name: 'WALLETTRANSACTION' })
 export class WalletTransaction {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Users, (user) => user.id)
-  transactionInitiatorId: Users;
+  @ManyToOne(() => User, (user) => user.id)
+  transactionInitiatorId: User;
 
   @Column()
   currency: string;

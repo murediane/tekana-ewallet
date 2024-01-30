@@ -4,14 +4,14 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AppModule } from '../src/app.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { RolesEnum, Users } from '../src/modules/users/user.entity';
-import { Wallet } from '../src/modules/wallets/entities/wallet.entity';
-import { WalletTransaction } from '../src/modules/wallets/entities/transactions.entity';
+import { RolesEnum, User } from '../src/modules/user/user.entity';
+import { Wallet } from '../src/modules/wallet/entities/wallet.entity';
+import { WalletTransaction } from '../src/modules/wallet/entities/transactions.entity';
 import { Repository } from 'typeorm';
 
 describe('eWallet Test (e2e)', () => {
   let app: INestApplication;
-  let userRepository: Repository<Users>;
+  let userRepository: Repository<User>;
   let walletRepository: Repository<Wallet>;
   let walletTransactionRepository: Repository<WalletTransaction>;
 
@@ -21,7 +21,7 @@ describe('eWallet Test (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    userRepository = moduleFixture.get(getRepositoryToken(Users));
+    userRepository = moduleFixture.get(getRepositoryToken(User));
     walletRepository = moduleFixture.get(getRepositoryToken(Wallet));
     walletTransactionRepository = moduleFixture.get(
       getRepositoryToken(WalletTransaction),

@@ -9,14 +9,14 @@ import {
 } from '@nestjs/common';
 
 import { Wallet } from './entities/wallet.entity';
-import { RolesEnum, Users } from '../users/user.entity';
+import { RolesEnum, User } from '../user/user.entity';
 import {
   WalletTransaction,
   TransactionTypeEnum,
 } from './entities/transactions.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Equal, QueryRunner, Repository } from 'typeorm';
-import { UsersService } from '../users/user.service';
+import { UsersService } from '../user/user.service';
 
 @Injectable()
 export class WalletsService {
@@ -25,14 +25,14 @@ export class WalletsService {
     private readonly userService: UsersService,
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
-    @InjectRepository(Users)
-    private readonly userRepository: Repository<Users>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     @InjectRepository(WalletTransaction)
     private readonly waletTransactionRepository: Repository<WalletTransaction>,
   ) {}
 
   async createWallet(
-    user: Users,
+    user: User,
     currency: string,
     queryRunner: QueryRunner,
   ): Promise<Wallet> {

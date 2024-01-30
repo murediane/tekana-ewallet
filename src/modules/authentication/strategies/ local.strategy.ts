@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
-import { UsersService } from '../../users/user.service';
+import { UsersService } from '../../user/user.service';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()

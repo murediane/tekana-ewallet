@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { UsersService } from './user.service';
-import { RolesEnum, Users } from './user.entity';
+import { RolesEnum, User } from './user.entity';
 import { CreateAdminDTO } from './user.dto';
 import { JWTAuthGuard } from '../authentication/guards/jwt-auth-guard';
 import { RolesGuard } from '../authentication/guards/roles.guards';
@@ -11,7 +11,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  async createUser(@Body() user: Partial<Users>) {
+  async createUser(@Body() user: Partial<User>) {
     return this.usersService.createUser(user);
   }
 

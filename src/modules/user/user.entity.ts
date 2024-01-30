@@ -7,7 +7,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Wallet } from '../wallets/entities/wallet.entity';
+import { Wallet } from '../wallet/entities/wallet.entity';
+import { IsEnum } from 'class-validator';
 
 export enum RolesEnum {
   SuperAdmin = 'superAdmin',
@@ -16,8 +17,8 @@ export enum RolesEnum {
   Client = 'client',
 }
 
-@Entity()
-export class Users {
+@Entity({ name: 'USER' })
+export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -43,6 +44,7 @@ export class Users {
   currency: string;
 
   @Column()
+  @IsEnum(RolesEnum)
   roles: string;
 
   @OneToOne(() => Wallet, { eager: true, cascade: true, onDelete: 'CASCADE' })

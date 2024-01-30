@@ -1,4 +1,4 @@
-import { Wallet } from '../wallets/entities/wallet.entity';
+import { Wallet } from '../wallet/entities/wallet.entity';
 import { RolesEnum } from './User.entity';
 export class CreateAdminDTO {
   email: string;

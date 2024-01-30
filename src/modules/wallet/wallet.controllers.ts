@@ -12,7 +12,7 @@ import { Wallet } from './entities/wallet.entity';
 import { Roles } from '../../shared/decorators/role.decorator';
 import { RolesGuard } from '../authentication/guards/roles.guards';
 import { JWTAuthGuard } from '../authentication/guards/jwt-auth-guard';
-import { RolesEnum } from '../users/user.entity';
+import { RolesEnum } from '../user/user.entity';
 
 @Controller('wallets')
 export class WalletsController {
