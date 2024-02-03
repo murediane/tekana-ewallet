@@ -5,6 +5,7 @@ import { CreateAdminDTO } from './user.dto';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { KafkaService } from '../kafka/kafka.service';
 
 @Injectable()
 export class UsersService {
@@ -13,6 +14,7 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
     private readonly walletsService: WalletsService,
     private dataSource: DataSource,
+    private readonly kafkaService: KafkaService,
   ) {}
 
   async createUser(user: Partial<User>): Promise<User> {
@@ -47,13 +49,18 @@ export class UsersService {
       );
 
       createdUser.wallet = createdWallet;
+
       await queryRunner.manager.save(createdUser);
+
       await queryRunner.commitTransaction();
+
+      this.kafkaService.sendNotificationNewUserCreated(createdUser);
 
       return createdUser;
     } catch (err) {
       // since we have errors lets rollback the changes we made
       await queryRunner.rollbackTransaction();
+
       return err;
     } finally {
       // you need to release a queryRunner which was manually instantiated
@@ -72,10 +79,14 @@ export class UsersService {
   }
   async createAdminUser(payload: CreateAdminDTO) {
     const hashedPassword = await bcrypt.hash(payload.password, 10);
+
     const role = payload.roles as unknown as RolesEnum;
+
     const userExist = await this.findByEmail(payload.email);
+
     if (userExist) {
       throw new BadRequestException('user already exist');
+
     }
     const createdAdmin = this.userRepository.create({
       ...payload,
@@ -84,6 +95,7 @@ export class UsersService {
       roles: role,
     });
     await this.userRepository.save(createdAdmin);
+
     return createdAdmin;
   }
   async findAllUsers() {

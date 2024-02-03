@@ -13,7 +13,7 @@ describe('eWallet Test (e2e)', () => {
   let app: INestApplication;
   let userRepository: Repository<User>;
   let walletRepository: Repository<Wallet>;
-  let walletTransactionRepository: Repository<WalletTransaction>;
+  let walletTransactionRepository: Repository<WalletTransaction>
 
   beforeEach(async () => {
     const moduleFixture = await Test.createTestingModule({

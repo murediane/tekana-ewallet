@@ -6,13 +6,6 @@ export enum Environment {
 export interface configuration {
   env: Environment;
   port: string;
-  // database: {
-  //   host: string;
-  //   port: number;
-  //   username: string;
-  //   password: string;
-  //   serviceName: string;
-  // };
   database: {
     user: string;
     password: string;
@@ -29,40 +22,22 @@ export interface configuration {
   redis: {
     url: string;
   };
+  kafka: {
+    host: string;
+  };
 }
 
 export default (): configuration => {
+  
   const isProduction = process.env.NODE_ENV === Environment.Production;
+
   const isDevelopment = process.env.NODE_ENV === Environment.Development;
+
   const isTest = process.env.NODE_ENV === Environment.Test;
-
-  // function getValidPort(port: string | undefined): number {
-  //   if (!port) {
-  //     throw new Error('DBPORT is not defined in the environment variables.');
-  //   }
-
-  //   const parsedPort = parseInt(port, 10);
-  //   if (isNaN(parsedPort)) {
-  //     throw new Error(`DBPORT is not a valid number: ${port}`);
-  //   }
-
-  //   if (parsedPort < 1 || parsedPort > 65535) {
-  //     throw new Error(`DBPORT is out of valid range (1-65535): ${parsedPort}`);
-  //   }
-
-  //   return parsedPort;
-  // }
 
   return {
     env: process.env.NODE_ENV as Environment,
     port: process.env.PORT || '3000',
-    // database: {
-    //   url: isDevelopment
-    //     ? process.env.DB_URL
-    //     : isTest
-    //     ? process.env.TEST_DB_URL
-    //     : process.env.DB_URL,
-    // },
     database: {
       // host: process.env.DBHOST,
       // port: +process.env.DBPORT,
@@ -90,6 +65,9 @@ export default (): configuration => {
     },
     redis: {
       url: process.env.REDIS_URL,
+    },
+    kafka: {
+      host: process.env.KAFKA_URL,
     },
   };
 };

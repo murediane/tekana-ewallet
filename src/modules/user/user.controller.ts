@@ -5,6 +5,7 @@ import { CreateAdminDTO } from './user.dto';
 import { JWTAuthGuard } from '../authentication/guards/jwt-auth-guard';
 import { RolesGuard } from '../authentication/guards/roles.guards';
 import { Roles } from '../../shared/decorators/role.decorator';
+import { MessagePattern } from '@nestjs/microservices';
 
 @Controller('users')
 export class UsersController {
@@ -33,5 +34,9 @@ export class UsersController {
   @Roles(RolesEnum.Admin, RolesEnum.SuperAdmin)
   async findUserByEmail(@Param('email') email: string) {
     return this.usersService.findByEmail(email);
+  }
+  @MessagePattern('NEW_USER_CREATED')
+  async handleNewUserCreatedMessage(newUser: User) {
+    console.warn('New User Created', JSON.stringify(newUser));
   }
 }

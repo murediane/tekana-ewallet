@@ -46,6 +46,7 @@ export class WalletsService {
 
     // Save the wallet instance
     await queryRunner.manager.save(newWallet);
+
     return newWallet;
   }
 
@@ -139,6 +140,7 @@ export class WalletsService {
     const senderUser = await this.userRepository.findOne({
       where: { id: senderUserId },
     });
+
     if (!senderWallet) {
       throw new NotFoundException(`Sender's wallet not found`);
     }
@@ -166,13 +168,15 @@ export class WalletsService {
 
     // Update balances
     senderWallet.balance -= amount;
+
     receiverWallet.balance += amount;
 
     await this.walletRepository.save(senderWallet);
+    
     await this.walletRepository.save(receiverWallet);
 
     // Record the transaction
-    const transaction = await this.waletTransactionRepository.create({
+    const transactionData = await this.waletTransactionRepository.create({
       transactionInitiatorId: senderUser,
       currency: currency,
       amount: amount,
@@ -184,9 +188,10 @@ export class WalletsService {
       updatedAt: new Date(),
     });
 
-    await this.waletTransactionRepository.save(transaction);
+    await this.waletTransactionRepository.save(transactionData);
+    // this.eventEmitter.emit('transaction.successful', { transactionData });
 
-    return transaction;
+    return transactionData;
   }
 
   async findTransactionsByUserId(
