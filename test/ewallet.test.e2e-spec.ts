@@ -4,21 +4,41 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AppModule } from '../src/app.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { RolesEnum, User } from '../src/modules/user/user.entity';
+import { User } from '../src/modules/user/user.entity';
 import { Wallet } from '../src/modules/wallet/entities/wallet.entity';
 import { WalletTransaction } from '../src/modules/wallet/entities/transactions.entity';
 import { Repository } from 'typeorm';
+import { AppEnums } from '../src/common/enum';
+import { KafkaService } from '../src/modules/kafka/kafka.service';
+import { RedisService } from '../src/modules/redis/redis.service';
+
+const mockedKafkaService = {
+  sendNotificationNewUserCreated: jest.fn(),
+  onModuleInit: jest.fn(),
+  onModuleDestroy: jest.fn(),
+};
+
+const mockedRedisService = {
+  sendEventNewAdminCreated: jest.fn(),
+  onModuleInit: jest.fn(),
+  onModuleDestroy: jest.fn(),
+};
 
 describe('eWallet Test (e2e)', () => {
   let app: INestApplication;
   let userRepository: Repository<User>;
   let walletRepository: Repository<Wallet>;
-  let walletTransactionRepository: Repository<WalletTransaction>
+  let walletTransactionRepository: Repository<WalletTransaction>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(KafkaService)
+      .useValue(mockedKafkaService)
+      .overrideProvider(RedisService)
+      .useValue(mockedRedisService)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     userRepository = moduleFixture.get(getRepositoryToken(User));
@@ -38,7 +58,7 @@ describe('eWallet Test (e2e)', () => {
       phoneNumber: '078323456',
       country: 'rwanda',
       currency: 'RWF',
-      roles: RolesEnum.Client,
+      role: AppEnums.RolesEnum.Client,
     };
 
     const response = await request(app.getHttpServer())
@@ -50,6 +70,10 @@ describe('eWallet Test (e2e)', () => {
       where: { email: response.body.email },
     });
 
+    expect(
+      mockedKafkaService.sendNotificationNewUserCreated,
+    ).toHaveBeenCalledWith(expect.anything());
+
     expect(user).toBeDefined();
 
     expect(user.email).toBe(userPayload.email);
@@ -58,7 +82,7 @@ describe('eWallet Test (e2e)', () => {
     expect(user.phoneNumber).toBe(userPayload.phoneNumber);
     expect(user.country).toBe(userPayload.country);
     expect(user.currency).toBe(userPayload.currency);
-    expect(user.roles).toBe(userPayload.roles);
+    expect(user.role).toBe(userPayload.role);
 
     // Check wallet properties
     expect(user.wallet.currency).toBe(userPayload.currency);
@@ -69,15 +93,15 @@ describe('eWallet Test (e2e)', () => {
     //create admin user
     const hashedPassword = await bcrypt.hash('chan@2222', 10);
     const superAdminPayload = {
-      username: 'kiki',
+      username: 'superkiki',
       email: 'superadmin@example.com',
       password: hashedPassword,
-      firstName: 'tiyu',
-      lastName: 'tamoni',
+      firstName: 'super',
+      lastName: 'admin',
       phoneNumber: '078323456',
       country: 'rwanda',
       currency: 'RWF',
-      roles: RolesEnum.SuperAdmin,
+      role: AppEnums.RolesEnum.SuperAdmin,
     };
 
     // manually create a superadmin
@@ -95,13 +119,13 @@ describe('eWallet Test (e2e)', () => {
     const adminPayload = {
       username: 'john',
       email: 'admin@example.com',
-      password: hashedPassword,
+      password: 'chan@2222',
       firstName: 'john',
       lastName: 'paul',
       phoneNumber: '078323334',
       country: 'rwanda',
       currency: 'RWF',
-      roles: RolesEnum.Admin,
+      role: AppEnums.RolesEnum.Admin,
     };
 
     // Use supertest to send a request to the create admin endpoint
@@ -117,6 +141,7 @@ describe('eWallet Test (e2e)', () => {
       adminPayload.email,
     );
   });
+
   it('/users (GET) - Should return all users for admin or superadmin', async () => {
     // Log in as an admin user to get the JWT token
     const loginResponse = await request(app.getHttpServer())
@@ -142,24 +167,21 @@ describe('eWallet Test (e2e)', () => {
     expect(firstUser).toHaveProperty('lastName');
     expect(firstUser).toHaveProperty('phoneNumber');
     expect(firstUser).toHaveProperty('country');
-    expect(firstUser).toHaveProperty('roles');
-    expect(firstUser).toHaveProperty('lastName');
-    expect(firstUser).toHaveProperty('phoneNumber');
-    expect(firstUser).toHaveProperty('country');
-    expect(firstUser).toHaveProperty('roles');
+    expect(firstUser).toHaveProperty('role');
     expect(firstUser).toHaveProperty('wallet');
   });
+
   it('/wallets/user-email/:email (GET) - should return the wallet for the specified user', async () => {
     // Create a user
     const userPayload = {
       email: 'uniq@example.com',
       password: 'chan@2222',
-      firstName: 'tiyu',
-      lastName: 'tamoni',
-      phoneNumber: '078323456',
+      firstName: 'uniq',
+      lastName: 'john',
+      phoneNumber: '0783234568',
       country: 'rwanda',
       currency: 'RWF',
-      roles: RolesEnum.Client,
+      role: AppEnums.RolesEnum.Client,
     };
     const createdUser = await userRepository.save(userPayload);
 
@@ -184,7 +206,7 @@ describe('eWallet Test (e2e)', () => {
 
     // Make a request to get the wallet by user email
     const response = await request(app.getHttpServer())
-      .get(`/wallets/user-email/${userPayload.email}`)
+      .get(`/wallet/user-email/${userPayload.email}`)
       .set('Authorization', `Bearer ${authToken}`)
       .expect(HttpStatus.OK);
 
@@ -193,17 +215,17 @@ describe('eWallet Test (e2e)', () => {
     expect(response.body.balance).toBe(createdWallet.balance);
   });
 
-  it('/wallets/user-email/:email (GET) - should return 403 Forbidden if the user does not have permission', async () => {
+  it('/wallet/user-email/:email (GET) - should return 403 Forbidden if the user does not have permission', async () => {
     // Create a user
     const userPayload = {
-      email: 'testing@example.com',
+      email: 'testing32@example.com',
       password: 'chan@2222',
-      firstName: 'tiyu',
-      lastName: 'tamoni',
+      firstName: 'testing32',
+      lastName: 'chan',
       phoneNumber: '078323456',
       country: 'rwanda',
       currency: 'RWF',
-      roles: RolesEnum.Client,
+      role: AppEnums.RolesEnum.Client,
     };
     const userPayload2 = {
       email: 'testinger@example.com',
@@ -213,7 +235,7 @@ describe('eWallet Test (e2e)', () => {
       phoneNumber: '078323456',
       country: 'rwanda',
       currency: 'RWF',
-      roles: RolesEnum.Client,
+      role: AppEnums.RolesEnum.Client,
     };
     await userRepository.save(userPayload);
     await userRepository.save(userPayload2);
@@ -230,12 +252,12 @@ describe('eWallet Test (e2e)', () => {
 
     // Make a request to get the wallet by user email (using a different user's email)
     await request(app.getHttpServer())
-      .get(`/wallets/user-email/${userPayload.email}`)
+      .get(`/wallet/user-email/${userPayload.email}`)
       .set('Authorization', `Bearer ${authToken}`)
       .expect(HttpStatus.UNAUTHORIZED);
   });
 
-  it('/wallets/user-email/:email (GET) - should return 404 Not Found if the user does not exist', async () => {
+  it('/wallet/user-email/:email (GET) - should return 404 Not Found if the user does not exist', async () => {
     // Log in as an admin user to get the JWT token
     const loginResponse = await request(app.getHttpServer())
       .post('/auth/login')
@@ -248,11 +270,12 @@ describe('eWallet Test (e2e)', () => {
 
     // Make a request to get the wallet by non-existent user email
     await request(app.getHttpServer())
-      .get('/wallets/user-email/nonexistent@example.com')
+      .get('/wallet/user-email/nonexistent@example.com')
       .set('Authorization', `Bearer ${authToken}`)
       .expect(HttpStatus.NOT_FOUND);
   });
-  it("/wallets/admin-topup/:id (POST) - should successfully top up a user's wallet by an admin", async () => {
+
+  it("/wallet/admin-topup/:id (POST) - should successfully top up a user's wallet by an admin", async () => {
     // Create an admin user
     const hashedPassword = await bcrypt.hash('admin@123', 10);
     const adminPayload = {
@@ -264,7 +287,7 @@ describe('eWallet Test (e2e)', () => {
       phoneNumber: '078323334',
       country: 'rwanda',
       currency: 'RWF',
-      roles: RolesEnum.Admin,
+      role: AppEnums.RolesEnum.Admin,
     };
     await userRepository.save(adminPayload);
 
@@ -277,7 +300,7 @@ describe('eWallet Test (e2e)', () => {
       phoneNumber: '078323456',
       country: 'rwanda',
       currency: 'RWF',
-      roles: RolesEnum.Client,
+      role: AppEnums.RolesEnum.Client,
     };
     const userResponse = await request(app.getHttpServer())
       .post('/users')
@@ -297,7 +320,7 @@ describe('eWallet Test (e2e)', () => {
 
     // Make a request to top up the user's wallet
     const topUpResponse = await request(app.getHttpServer())
-      .post(`/wallets/admin-topup/${userResponse.body.wallet.id}`)
+      .post(`/wallet/admin-topup/${userResponse.body.wallet.id}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send({
         amount: 5000,
@@ -313,14 +336,14 @@ describe('eWallet Test (e2e)', () => {
     // Create a non-admin user
 
     const userPayload = {
-      email: 'john2@example.com',
+      email: 'john24@example.com',
       password: 'user@123',
       firstName: 'tiyu',
       lastName: 'tamoni',
       phoneNumber: '078323456',
       country: 'rwanda',
       currency: 'RWF',
-      roles: RolesEnum.Client,
+      role: AppEnums.RolesEnum.Client,
     };
     const user = await request(app.getHttpServer())
       .post('/users')
@@ -331,7 +354,7 @@ describe('eWallet Test (e2e)', () => {
     const userLogin = await request(app.getHttpServer())
       .post('/auth/login')
       .send({
-        email: 'john2@example.com',
+        email: 'john24@example.com',
         password: 'user@123',
       })
       .expect(HttpStatus.CREATED);
@@ -340,13 +363,13 @@ describe('eWallet Test (e2e)', () => {
 
     // Make a request to top up the user's wallet as a non-admin
     await request(app.getHttpServer())
-      .post(`/wallets/admin-topup/${user.body.wallet.id}`)
+      .post(`/wallet/admin-topup/${user.body.wallet.id}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send({
         amount: 50,
         currency: 'USD',
       })
-      .expect(HttpStatus.FORBIDDEN);
+      .expect(HttpStatus.UNAUTHORIZED);
   });
 
   it('/wallets/admin-topup/:id (POST) - should return 404 Not Found if the user does not exist', async () => {
@@ -363,7 +386,7 @@ describe('eWallet Test (e2e)', () => {
 
     // Make a request to top up the wallet of a non-existent user
     await request(app.getHttpServer())
-      .post('/wallets/admin-topup/999')
+      .post('/wallet/admin-topup/999')
       .set('Authorization', `Bearer ${authToken}`)
       .send({
         amount: 50,
@@ -385,7 +408,7 @@ describe('eWallet Test (e2e)', () => {
 
     // Transfer funds from sender to receiver
     const transferResponse = await request(app.getHttpServer())
-      .post('/wallets/transfer')
+      .post('/wallet/transfer')
       .set('Authorization', `Bearer ${senderAuthToken}`)
       .send({
         receiverEmail: 'testing@example.com',
@@ -409,7 +432,7 @@ describe('eWallet Test (e2e)', () => {
       phoneNumber: '078323456',
       country: 'rwanda',
       currency: 'RWF',
-      roles: RolesEnum.Client,
+      role: AppEnums.RolesEnum.Client,
     };
     await request(app.getHttpServer())
       .post('/users')
@@ -425,7 +448,7 @@ describe('eWallet Test (e2e)', () => {
       phoneNumber: '078323457',
       country: 'rwanda',
       currency: 'RWF',
-      roles: RolesEnum.Client,
+      role: AppEnums.RolesEnum.Client,
     };
     await request(app.getHttpServer())
       .post('/users')
@@ -449,7 +472,7 @@ describe('eWallet Test (e2e)', () => {
 
     // Attempt to transfer funds from sender to receiver with insufficient funds
     await request(app.getHttpServer())
-      .post('/wallets/transfer')
+      .post('/wallet/transfer')
       .set('Authorization', `Bearer ${senderAuthToken}`)
       .send({
         receiverEmail: 'receiver@example.com',
@@ -458,6 +481,7 @@ describe('eWallet Test (e2e)', () => {
       })
       .expect(HttpStatus.BAD_REQUEST);
   });
+
   afterAll(async () => {
     await walletTransactionRepository.delete({});
     await walletRepository.delete({});

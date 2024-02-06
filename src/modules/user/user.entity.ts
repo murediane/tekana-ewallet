@@ -9,13 +9,7 @@ import {
 } from 'typeorm';
 import { Wallet } from '../wallet/entities/wallet.entity';
 import { IsEnum } from 'class-validator';
-
-export enum RolesEnum {
-  SuperAdmin = 'superAdmin',
-  Admin = 'admin',
-  Agent = 'agent',
-  Client = 'client',
-}
+import { AppEnums } from '../../common/enum';
 
 @Entity({ name: 'USER' })
 export class User {
@@ -43,9 +37,12 @@ export class User {
   @Column()
   currency: string;
 
-  @Column()
-  @IsEnum(RolesEnum)
-  roles: string;
+  @Column({
+    type: 'varchar',
+    enum: AppEnums.RolesEnum,
+  })
+  @IsEnum(AppEnums.RolesEnum)
+  role: string;
 
   @OneToOne(() => Wallet, { eager: true, cascade: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'walletId' })

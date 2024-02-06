@@ -1,22 +1,22 @@
 import { Module } from '@nestjs/common';
 import { ClientProxyFactory } from '@nestjs/microservices';
-import { KafkaService } from './kafka.service';
 import { AppConfigService } from '../../config/appconfig.service';
 import { AppConfigModule } from '../../config/appconfig.module';
+import { RedisService } from './redis.service';
 
 @Module({
   imports: [AppConfigModule],
   providers: [
     {
-      provide: 'KAFKA_SERVICE',
+      provide: 'REDIS_SERVICE',
       useFactory: (appConfigService: AppConfigService) => {
-        const kafkaServiceOptions = appConfigService.kafkaConfigOptions;
-        return ClientProxyFactory.create(kafkaServiceOptions);
+        const redisServiceOptions = appConfigService.redisConfigOptions;
+        return ClientProxyFactory.create(redisServiceOptions);
       },
       inject: [AppConfigService],
     },
-    KafkaService,
+    RedisService,
   ],
-  exports: [KafkaService],
+  exports: [RedisService],
 })
-export class KafkaModule {}
+export class RedisModule {}

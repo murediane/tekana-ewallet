@@ -1,5 +1,5 @@
 import { Wallet } from '../wallet/entities/wallet.entity';
-import { RolesEnum } from './User.entity';
+import { AppEnums } from '../../common/enum';
 export class CreateAdminDTO {
   email: string;
 
@@ -10,7 +10,7 @@ export class CreateAdminDTO {
 
   phoneNumber: string;
 
-  roles: RolesEnum;
+  role: typeof AppEnums.RolesEnum;
 }
 
 export class CreateUserDTO {
@@ -25,7 +25,8 @@ export class CreateUserDTO {
   country: string;
 
   currency: string;
-  roles: string;
+
+  role: string;
 
   walletId: Wallet;
 }

@@ -17,6 +17,7 @@ import { Wallet } from './modules/wallet/entities/wallet.entity';
 import { WalletTransaction } from './modules/wallet/entities/transactions.entity';
 import { AppConfigService } from './config/appconfig.service';
 import { KafkaModule } from './modules/kafka/kafka.module';
+import { RedisModule } from './modules/redis/redis.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { KafkaModule } from './modules/kafka/kafka.module';
     UsersModule,
     WalletsModule,
     KafkaModule,
+    RedisModule,
   ],
   controllers: [AppController, AuthController],
   providers: [

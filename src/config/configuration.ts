@@ -28,7 +28,6 @@ export interface configuration {
 }
 
 export default (): configuration => {
-  
   const isProduction = process.env.NODE_ENV === Environment.Production;
 
   const isDevelopment = process.env.NODE_ENV === Environment.Development;

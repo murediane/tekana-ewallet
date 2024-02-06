@@ -9,14 +9,13 @@ import {
 } from '@nestjs/common';
 
 import { Wallet } from './entities/wallet.entity';
-import { RolesEnum, User } from '../user/user.entity';
-import {
-  WalletTransaction,
-  TransactionTypeEnum,
-} from './entities/transactions.entity';
+import { User } from '../user/user.entity';
+import { WalletTransaction } from './entities/transactions.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Equal, QueryRunner, Repository } from 'typeorm';
 import { UsersService } from '../user/user.service';
+import { TopupwalletRequestDTO, TransferRequestDTO } from './wallet.dto';
+import { AppEnums } from '../../common/enum';
 
 @Injectable()
 export class WalletsService {
@@ -60,9 +59,11 @@ export class WalletsService {
   ): Promise<Wallet> {
     if (
       email !== currentUser.email &&
-      ![RolesEnum.Admin, RolesEnum.Agent, RolesEnum.SuperAdmin].some((role) =>
-        currentUser.roles.includes(role),
-      )
+      ![
+        AppEnums.RolesEnum.Admin,
+        AppEnums.RolesEnum.Agent,
+        AppEnums.RolesEnum.SuperAdmin,
+      ].some((role) => currentUser.role.includes(role))
     ) {
       throw new ForbiddenException(
         'You do not have permission to access this wallet.',
@@ -86,11 +87,10 @@ export class WalletsService {
 
   async adminTopUpWallet(
     walletId: number,
-    amount: number,
-    currency: string,
+    topupwalletDto: TopupwalletRequestDTO,
     currentUser: any,
   ): Promise<Wallet> {
-    if (!currentUser.roles.includes('admin')) {
+    if (!currentUser.role.includes(AppEnums.RolesEnum.Admin)) {
       throw new UnauthorizedException('Only admins can top up a wallet');
     }
 
@@ -105,17 +105,18 @@ export class WalletsService {
     }
 
     // Update wallet balance
-    wallet.balance += amount;
+    wallet.balance += topupwalletDto.amount;
+
     await this.walletRepository.save(wallet);
 
     // Create a new transaction
     const transaction = this.waletTransactionRepository.create({
-      amount: amount,
-      currency: currency,
+      amount: topupwalletDto.amount,
+      currency: topupwalletDto.currency,
       transactionInitiatorId: currentUser,
       fromWallet: null, // since it's a top-up, there's no source wallet
       toWallet: wallet,
-      transactionType: TransactionTypeEnum.Topup,
+      transactionType: AppEnums.TransactionTypeEnum.Topup,
       status: 'completed',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -128,9 +129,7 @@ export class WalletsService {
 
   async transferFunds(
     senderUserId: number,
-    receiverUserEmail: string,
-    amount: number,
-    currency: string,
+    transferRequestDTO: TransferRequestDTO,
   ): Promise<WalletTransaction> {
     // Find sender's wallet
     const senderWallet = await this.walletRepository.findOne({
@@ -145,14 +144,16 @@ export class WalletsService {
       throw new NotFoundException(`Sender's wallet not found`);
     }
 
-    if (senderWallet.currency !== currency) {
+    if (senderWallet.currency !== transferRequestDTO.currency) {
       throw new BadRequestException(`Currency mismatch in sender's wallet`);
     }
 
-    if (senderWallet.balance < amount) {
+    if (senderWallet.balance < transferRequestDTO.amount) {
       throw new BadRequestException("Insufficient funds in sender's wallet");
     }
-    const receiverUser = await this.userService.findByEmail(receiverUserEmail);
+    const receiverUser = await this.userService.findByEmail(
+      transferRequestDTO.receiverEmail,
+    );
     // Find receiver's wallet
     const receiverWallet = await this.walletRepository.findOne({
       where: { id: receiverUser.wallet.id },
@@ -162,27 +163,27 @@ export class WalletsService {
       throw new NotFoundException(`Receiver's wallet not found`);
     }
 
-    if (receiverWallet.currency !== currency) {
+    if (receiverWallet.currency !== transferRequestDTO.currency) {
       throw new BadRequestException(`Currency mismatch in receiver's wallet`);
     }
 
     // Update balances
-    senderWallet.balance -= amount;
+    senderWallet.balance -= transferRequestDTO.amount;
 
-    receiverWallet.balance += amount;
+    receiverWallet.balance += transferRequestDTO.amount;
 
     await this.walletRepository.save(senderWallet);
-    
+
     await this.walletRepository.save(receiverWallet);
 
     // Record the transaction
     const transactionData = await this.waletTransactionRepository.create({
       transactionInitiatorId: senderUser,
-      currency: currency,
-      amount: amount,
+      currency: transferRequestDTO.currency,
+      amount: transferRequestDTO.amount,
       fromWallet: senderWallet,
       toWallet: receiverWallet,
-      transactionType: TransactionTypeEnum.transfer,
+      transactionType: AppEnums.TransactionTypeEnum.transfer,
       status: 'completed',
       createdAt: new Date(),
       updatedAt: new Date(),

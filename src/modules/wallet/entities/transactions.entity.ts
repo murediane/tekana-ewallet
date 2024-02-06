@@ -1,11 +1,13 @@
 import { User } from '../../user/user.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Wallet } from './wallet.entity';
+import { AppEnums } from '../../../common/enum';
+import { IsEnum } from 'class-validator';
 
-export enum TransactionTypeEnum {
-  Topup = 'topup',
-  transfer = 'transfer',
-}
+// export enum TransactionTypeEnum {
+//   Topup = 'topup',
+//   transfer = 'transfer',
+// }
 
 @Entity({ name: 'WALLETTRANSACTION' })
 export class WalletTransaction {
@@ -27,8 +29,12 @@ export class WalletTransaction {
   @ManyToOne(() => Wallet, (wallet) => wallet.id, { cascade: true })
   toWallet: Wallet;
 
-  @Column()
-  transactionType: TransactionTypeEnum;
+  @Column({
+    type: 'varchar',
+    enum: AppEnums.TransactionTypeEnum,
+  })
+  @IsEnum(AppEnums.TransactionTypeEnum)
+  transactionType: string;
 
   @Column()
   status: string;

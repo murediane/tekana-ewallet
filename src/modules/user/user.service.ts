@@ -1,11 +1,13 @@
 import { WalletsService } from '../wallet/wallet.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { RolesEnum, User } from './user.entity';
+import { User } from './user.entity';
 import { CreateAdminDTO } from './user.dto';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { KafkaService } from '../kafka/kafka.service';
+import { AppEnums } from '../../common/enum';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class UsersService {
@@ -15,6 +17,7 @@ export class UsersService {
     private readonly walletsService: WalletsService,
     private dataSource: DataSource,
     private readonly kafkaService: KafkaService,
+    private readonly redisService: RedisService,
   ) {}
 
   async createUser(user: Partial<User>): Promise<User> {
@@ -32,11 +35,12 @@ export class UsersService {
       if (userExist) {
         throw new BadRequestException('User already exists');
       }
+      const role = AppEnums.RolesEnum.Client.toString();
 
       const createdUser = this.userRepository.create({
         ...user,
         password: hashedPassword,
-        roles: RolesEnum.Client,
+        role: role,
       });
 
       await queryRunner.manager.save(createdUser);
@@ -54,7 +58,7 @@ export class UsersService {
 
       await queryRunner.commitTransaction();
 
-      this.kafkaService.sendNotificationNewUserCreated(createdUser);
+      await this.kafkaService.sendNotificationNewUserCreated(createdUser);
 
       return createdUser;
     } catch (err) {
@@ -80,20 +84,22 @@ export class UsersService {
   async createAdminUser(payload: CreateAdminDTO) {
     const hashedPassword = await bcrypt.hash(payload.password, 10);
 
-    const role = payload.roles as unknown as RolesEnum;
+    const role = payload.role as unknown as typeof AppEnums.RolesEnum;
 
     const userExist = await this.findByEmail(payload.email);
 
     if (userExist) {
       throw new BadRequestException('user already exist');
-
     }
     const createdAdmin = this.userRepository.create({
       ...payload,
       password: hashedPassword,
       currency: 'N/A',
-      roles: role,
+      role: role.toString(),
     });
+
+    this.redisService.sendEventNewAdminCreated(createdAdmin);
+
     await this.userRepository.save(createdAdmin);
 
     return createdAdmin;

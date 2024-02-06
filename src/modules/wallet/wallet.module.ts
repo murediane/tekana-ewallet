@@ -6,6 +6,7 @@ import { WalletTransaction } from './entities/transactions.entity';
 import { WalletsService } from './wallet.service';
 import { WalletsController } from './wallet.controllers';
 import { UsersModule } from '../user/user.module';
+import { UtilService } from '../../common/util.service';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { UsersModule } from '../user/user.module';
     forwardRef(() => UsersModule),
   ],
   controllers: [WalletsController],
-  providers: [WalletsService],
+  providers: [WalletsService, UtilService],
   exports: [WalletsService],
 })
 export class WalletsModule {}

@@ -1,6 +1,5 @@
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { TransactionTypeEnum } from './entities/transactions.entity';
-
+import { AppEnums } from '../../common/enum';
 export class CreateWalletDto {
   @IsNotEmpty()
   userId: number;
@@ -13,11 +12,21 @@ export class CreateWalletDto {
   @IsString()
   currency: string;
 }
-export class TopupwalletDTO {
+export class TopupwalletRequestDTO {
   @IsNotEmpty()
   amount: number;
 
+  @IsString()
+  currency: string;
+}
+export class TransferRequestDTO {
   @IsNotEmpty()
+  receiverEmail: string;
+
+  @IsNotEmpty()
+  amount: number;
+
+  @IsString()
   currency: string;
 }
 
@@ -27,7 +36,7 @@ export class TransactionData {
   transactionInitiatorId: string;
   fromWalletId: string | null;
   toWalletId: string;
-  transactionType: TransactionTypeEnum;
+  transactionType: typeof AppEnums.TransactionTypeEnum;
   status: string;
   createdAt: Date;
   updatedAt: Date;
