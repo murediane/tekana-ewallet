@@ -4,11 +4,6 @@ import { Wallet } from './wallet.entity';
 import { AppEnums } from '../../../common/enum';
 import { IsEnum } from 'class-validator';
 
-// export enum TransactionTypeEnum {
-//   Topup = 'topup',
-//   transfer = 'transfer',
-// }
-
 @Entity({ name: 'WALLETTRANSACTION' })
 export class WalletTransaction {
   @PrimaryGeneratedColumn()
