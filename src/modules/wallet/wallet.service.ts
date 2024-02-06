@@ -13,15 +13,15 @@ import { User } from '../user/user.entity';
 import { WalletTransaction } from './entities/transactions.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Equal, QueryRunner, Repository } from 'typeorm';
-import { UsersService } from '../user/user.service';
+import { UserService } from '../user/user.service';
 import { TopupwalletRequestDTO, TransferRequestDTO } from './wallet.dto';
 import { AppEnums } from '../../common/enum';
 
 @Injectable()
-export class WalletsService {
+export class WalletService {
   constructor(
-    @Inject(forwardRef(() => UsersService))
-    private readonly userService: UsersService,
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
     @InjectRepository(User)
@@ -195,7 +195,7 @@ export class WalletsService {
     return transactionData;
   }
 
-  async findTransactionsByUserId(
+  async findAllTransactionsByWalletId(
     walletId: number,
   ): Promise<WalletTransaction[]> {
     try {

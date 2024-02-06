@@ -1,7 +1,7 @@
 # tekana-e-wallet  MVP
  ## **<span style="color:#56d8e5">Technologies Used</span>**
  - Nest js
- - MongoDB
+ - Oracle
 
  ## **<span style="color:#56d8e5">Project setup</span>**
  -  create .env according to .env.example 
@@ -13,6 +13,10 @@
  ```
   npm run start:dev
 ```
+to run test run 
+
+``` npm run test:e2e```
+
 ## **<span style="color:#56d8e5">Endpoint implemented in this project </span>**
  ### Users
  - client registration : 
@@ -90,7 +94,7 @@
    - Transaction is created when topup or transfer is done
    -  admin get  transaction  : 
   
-   **<span style="color:green">GET : {{ baseUrl}}/wallets/transaction/wallet/:walletId</span>**
+   **<span style="color:green">GET : {{ baseUrl}}/wallet_transactions/:walletId</span>**
 
 
 #   **<span style="color:#56d8e5">step by step strategy  for tekana-e- wallet revamp </span>**

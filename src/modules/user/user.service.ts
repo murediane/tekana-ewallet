@@ -1,4 +1,4 @@
-import { WalletsService } from '../wallet/wallet.service';
+import { WalletService } from '../wallet/wallet.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { User } from './user.entity';
 import { CreateAdminDTO } from './user.dto';
@@ -10,11 +10,11 @@ import { AppEnums } from '../../common/enum';
 import { RedisService } from '../redis/redis.service';
 
 @Injectable()
-export class UsersService {
+export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly walletsService: WalletsService,
+    private readonly walletService: WalletService,
     private dataSource: DataSource,
     private readonly kafkaService: KafkaService,
     private readonly redisService: RedisService,
@@ -46,7 +46,7 @@ export class UsersService {
       await queryRunner.manager.save(createdUser);
 
       const currency = user.currency;
-      const createdWallet = await this.walletsService.createWallet(
+      const createdWallet = await this.walletService.createWallet(
         createdUser,
         currency,
         queryRunner,

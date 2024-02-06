@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { UsersService } from './user.service';
+import { UserService } from './user.service';
 import { User } from './user.entity';
 import { CreateAdminDTO } from './user.dto';
 import { JWTAuthGuard } from '../authentication/guards/jwt-auth-guard';
@@ -10,32 +10,32 @@ import { AppEnums } from '../../common/enum';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly userService: UserService) {}
 
   @Post()
   async createUser(@Body() user: Partial<User>) {
-    return this.usersService.createUser(user);
+    return this.userService.createUser(user);
   }
 
   @UseGuards(JWTAuthGuard, RolesGuard)
   @Post('/admin')
   @Roles(AppEnums.RolesEnum.Admin, AppEnums.RolesEnum.SuperAdmin)
   async createAdmin(@Body() user: CreateAdminDTO) {
-    return this.usersService.createAdminUser(user);
+    return this.userService.createAdminUser(user);
   }
 
   @UseGuards(JWTAuthGuard, RolesGuard)
   @Get()
   @Roles(AppEnums.RolesEnum.Admin, AppEnums.RolesEnum.SuperAdmin)
   async findAll() {
-    return this.usersService.findAllUsers();
+    return this.userService.findAllUsers();
   }
 
   @UseGuards(JWTAuthGuard, RolesGuard)
   @Get('user_email/:email')
   @Roles(AppEnums.RolesEnum.Admin, AppEnums.RolesEnum.SuperAdmin)
   async findUserByEmail(@Param('email') email: string) {
-    return this.usersService.findByEmail(email);
+    return this.userService.findByEmail(email);
   }
 
   @MessagePattern('NEW_USER_CREATED')

@@ -6,6 +6,7 @@ import {
   OneToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { Wallet } from '../wallet/entities/wallet.entity';
 import { IsEnum } from 'class-validator';
@@ -17,6 +18,7 @@ export class User {
   id: number;
 
   @Column()
+  @Index()
   email: string;
 
   @Column()

@@ -12,7 +12,7 @@ import {
   BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { WalletsService } from './wallet.service';
+import { WalletService } from './wallet.service';
 import { Wallet } from './entities/wallet.entity';
 import { Roles } from '../../shared/decorators/role.decorator';
 import { RolesGuard } from '../authentication/guards/roles.guards';
@@ -24,7 +24,7 @@ import { UtilService } from '../../common/util.service';
 @Controller('wallet')
 export class WalletsController {
   constructor(
-    private readonly walletsService: WalletsService,
+    private readonly walletService: WalletService,
 
     private utilService: UtilService,
   ) {}
@@ -32,13 +32,13 @@ export class WalletsController {
   @Get()
   @Roles(AppEnums.RolesEnum.Admin, AppEnums.RolesEnum.Agent)
   async findAll(): Promise<Wallet[]> {
-    return this.walletsService.findAllWallets();
+    return this.walletService.findAllWallets();
   }
 
   @UseGuards(JWTAuthGuard)
   @Get('/user-email/:email')
   findWalletByUserEmail(@Param('email') email: string, @Req() request) {
-    return this.walletsService.findWalletByUserEmail(email, request.user);
+    return this.walletService.findWalletByUserEmail(email, request.user);
   }
 
   @UseGuards(JWTAuthGuard)
@@ -55,7 +55,7 @@ export class WalletsController {
     @Req() request,
   ) {
     try {
-      const walletTopupResult = await this.walletsService.adminTopUpWallet(
+      const walletTopupResult = await this.walletService.adminTopUpWallet(
         walletId,
         topupwalletRequestDTO,
         request.user,
@@ -101,7 +101,7 @@ export class WalletsController {
     const senderUserId = req.user.id;
 
     try {
-      const transferResponse = await this.walletsService.transferFunds(
+      const transferResponse = await this.walletService.transferFunds(
         senderUserId,
         transferRequestDTO,
       );
@@ -131,13 +131,13 @@ export class WalletsController {
   }
 
   @UseGuards(JWTAuthGuard, RolesGuard)
-  @Get('transaction/wallet/:walletId')
+  @Get('wallet_transactions/:walletId')
   @Roles(
     AppEnums.RolesEnum.Admin,
     AppEnums.RolesEnum.Agent,
     AppEnums.RolesEnum.SuperAdmin,
   )
-  async findTransactionsByUserId(@Param('walletId') walletId: number) {
-    return this.walletsService.findTransactionsByUserId(walletId);
+  async findAllTransactionsByWalletId(@Param('walletId') walletId: number) {
+    return this.walletService.findAllTransactionsByWalletId(walletId);
   }
 }
